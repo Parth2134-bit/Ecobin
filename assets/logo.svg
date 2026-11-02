@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="48" viewBox="0 0 220 48">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3FA36B"/><stop offset="1" stop-color="#1F7A4D"/></linearGradient></defs>
+  <rect x="2" y="4" width="40" height="40" rx="12" fill="url(#g)"/>
+  <path d="M14 33c0-11 7-18 19-19-1 12-8 19-19 19z" fill="#fff"/>
+  <path d="M14 33c4-6 8-10 13-13" stroke="#1F7A4D" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <text x="52" y="33" font-family="Plus Jakarta Sans, Segoe UI, Arial, sans-serif" font-size="25" font-weight="800" fill="#FFFFFF" letter-spacing="-0.5">EcoBin</text>
+</svg>

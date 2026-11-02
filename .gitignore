@@ -1,0 +1,28 @@
+# ---- Secrets: never commit ----
+.streamlit/secrets.toml
+serviceAccountKey.json
+*firebase-adminsdk*.json
+*service-account*.json
+.env
+.env.*
+
+# ---- Local data & backups ----
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+backups/
+
+# ---- Python ----
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# ---- Editors / OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
