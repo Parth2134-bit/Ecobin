@@ -10,9 +10,8 @@ DATABASE_NAME = "ecobin.db"
 # --------------------------------------------------
 
 def get_connection():
-    """Create and return a connection to the SQLite database."""
-    connection = sqlite3.connect(DATABASE_NAME)
-    return connection
+    """Create and return a SQLite database connection."""
+    return sqlite3.connect(DATABASE_NAME)
 
 
 # --------------------------------------------------
@@ -20,11 +19,12 @@ def get_connection():
 # --------------------------------------------------
 
 def init_database():
-    """Create the actions table if it does not already exist."""
+    """Create the required database tables."""
 
     connection = get_connection()
     cursor = connection.cursor()
 
+    # Table for sustainable actions
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS actions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,6 +37,17 @@ def init_database():
         )
     """)
 
+    # Table for completed daily challenges
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS completed_challenges (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            challenge_title TEXT NOT NULL,
+            completion_date TEXT NOT NULL,
+            points INTEGER NOT NULL,
+            UNIQUE(challenge_title, completion_date)
+        )
+    """)
+
     connection.commit()
     connection.close()
 
@@ -46,7 +57,7 @@ def init_database():
 # --------------------------------------------------
 
 def add_action(action, category, action_date, quantity, points, notes=""):
-    """Save a completed sustainable action to the database."""
+    """Save a sustainable action."""
 
     connection = get_connection()
     cursor = connection.cursor()
@@ -79,7 +90,7 @@ def add_action(action, category, action_date, quantity, points, notes=""):
 # --------------------------------------------------
 
 def get_all_actions():
-    """Return all recorded actions as a Pandas DataFrame."""
+    """Return all recorded actions as a DataFrame."""
 
     connection = get_connection()
 
@@ -108,7 +119,7 @@ def get_all_actions():
 # --------------------------------------------------
 
 def get_total_points():
-    """Calculate the total Eco Points earned."""
+    """Calculate total points earned from all activities."""
 
     connection = get_connection()
     cursor = connection.cursor()
@@ -130,7 +141,7 @@ def get_total_points():
 # --------------------------------------------------
 
 def get_category_summary():
-    """Calculate the total number of recorded actions per category."""
+    """Calculate activity totals for each category."""
 
     connection = get_connection()
 
@@ -155,7 +166,7 @@ def get_category_summary():
 # --------------------------------------------------
 
 def get_daily_summary():
-    """Return total points earned on each date."""
+    """Return daily points and activity totals."""
 
     connection = get_connection()
 
@@ -174,3 +185,114 @@ def get_daily_summary():
     connection.close()
 
     return dataframe
+
+
+# --------------------------------------------------
+# COMPLETE A DAILY CHALLENGE
+# --------------------------------------------------
+
+def complete_challenge(challenge_title, completion_date, points):
+    """
+    Save a completed challenge.
+
+    Returns True if saved successfully.
+    Returns False if the challenge was already completed that day.
+    """
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO completed_challenges (
+                challenge_title,
+                completion_date,
+                points
+            )
+            VALUES (?, ?, ?)
+        """, (
+            challenge_title,
+            completion_date,
+            points
+        ))
+
+        connection.commit()
+
+        return True
+
+    except sqlite3.IntegrityError:
+        return False
+
+    finally:
+        connection.close()
+
+
+# --------------------------------------------------
+# CHECK CHALLENGE COMPLETION
+# --------------------------------------------------
+
+def has_completed_challenge(challenge_title, completion_date):
+    """Check whether a challenge has already been completed."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT id
+        FROM completed_challenges
+        WHERE challenge_title = ?
+        AND completion_date = ?
+    """, (
+        challenge_title,
+        completion_date
+    ))
+
+    result = cursor.fetchone()
+
+    connection.close()
+
+    return result is not None
+
+
+# --------------------------------------------------
+# GET COMPLETED CHALLENGES
+# --------------------------------------------------
+
+def get_completed_challenges(completion_date=None):
+    """Retrieve completed challenges, optionally for a specific date."""
+
+    connection = get_connection()
+
+    if completion_date:
+        query = """
+            SELECT
+                challenge_title,
+                completion_date,
+                points
+            FROM completed_challenges
+            WHERE completion_date = ?
+            ORDER BY id DESC
+        """
+
+        dataframe = pd.read_sql_query(
+            query,
+            connection,
+            params=(completion_date,)
+        )
+
+    else:
+        query = """
+            SELECT
+                challenge_title,
+                completion_date,
+                points
+            FROM completed_challenges
+            ORDER BY completion_date DESC, id DESC
+        """
+
+        dataframe = pd.read_sql_query(query, connection)
+
+    connection.close()
+
+    return dataframe
+
